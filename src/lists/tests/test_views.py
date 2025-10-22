@@ -416,6 +416,77 @@ class ListDetailViewTests(TestCase):
 
     @patch.object(get_user_model(), "update_preference")
     @patch.object(CustomList, "user_can_view")
+    def test_list_detail_view_filter_by_status(
+        self,
+        mock_user_can_view,
+        mock_update_preference,
+    ):
+        """Test the list_detail view with status filter."""
+        mock_user_can_view.return_value = True
+
+        # Create model instances with different statuses
+        Movie.objects.create(
+            item=self.movie_item,
+            status=Status.COMPLETED.value,
+            user=self.user,
+        )
+
+        TV.objects.create(
+            item=self.tv_item,
+            status=Status.IN_PROGRESS.value,
+            user=self.user,
+        )
+
+        Anime.objects.create(
+            item=self.anime_item,
+            status=Status.PLANNING.value,
+            user=self.user,
+        )
+
+        # Test filtering by Completed status
+        mock_update_preference.return_value = Status.COMPLETED.value
+        response = self.client.get(
+            reverse("list_detail", args=[self.custom_list.id])
+            + f"?status={Status.COMPLETED.value}",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["current_status"], Status.COMPLETED.value)
+        # Should only have the movie item
+        self.assertEqual(len(response.context["items"]), 1)
+        self.assertEqual(
+            response.context["items"][0].media_type,
+            MediaTypes.MOVIE.value,
+        )
+
+        # Test filtering by In Progress status
+        mock_update_preference.return_value = Status.IN_PROGRESS.value
+        response = self.client.get(
+            reverse("list_detail", args=[self.custom_list.id])
+            + f"?status={Status.IN_PROGRESS.value}",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["current_status"], Status.IN_PROGRESS.value)
+        # Should only have the TV item
+        self.assertEqual(len(response.context["items"]), 1)
+        self.assertEqual(response.context["items"][0].media_type, MediaTypes.TV.value)
+
+        # Test filtering by Planning status
+        mock_update_preference.return_value = Status.PLANNING.value
+        response = self.client.get(
+            reverse("list_detail", args=[self.custom_list.id])
+            + f"?status={Status.PLANNING.value}",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["current_status"], Status.PLANNING.value)
+        # Should only have the anime item
+        self.assertEqual(len(response.context["items"]), 1)
+        self.assertEqual(
+            response.context["items"][0].media_type,
+            MediaTypes.ANIME.value,
+        )
+
+    @patch.object(get_user_model(), "update_preference")
+    @patch.object(CustomList, "user_can_view")
     def test_list_detail_view_htmx_request(
         self,
         mock_user_can_view,
