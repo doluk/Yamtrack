@@ -598,8 +598,9 @@ def create_entry(request):
         try:
             s3_url = helpers.upload_to_s3(image_file)
             if s3_url:
-                # Update the form's cleaned data with the S3 URL
+                # Update the form's cleaned data and instance with the S3 URL
                 form.cleaned_data["image"] = s3_url
+                form.instance.image = s3_url
             else:
                 messages.error(
                     request,

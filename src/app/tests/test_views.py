@@ -1342,6 +1342,90 @@ class CreateEntryViewTests(TestCase):
         # No new item should be created
         self.assertEqual(Item.objects.count(), initial_count)
 
+    @patch("app.helpers.upload_to_s3")
+    def test_create_entry_with_file_upload(self, mock_upload):
+        """Test creating an entry with file upload."""
+        from io import BytesIO
+
+        from PIL import Image
+
+        # Create a mock S3 URL
+        mock_s3_url = "https://test-bucket.s3.us-east-1.amazonaws.com/custom-media/test-image.jpg"
+        mock_upload.return_value = mock_s3_url
+
+        # Create a test image file
+        image = Image.new("RGB", (100, 100), color="red")
+        image_file = BytesIO()
+        image.save(image_file, format="JPEG")
+        image_file.seek(0)
+        image_file.name = "test_image.jpg"
+
+        form_data = {
+            "title": "Test Movie with Upload",
+            "media_type": MediaTypes.MOVIE.value,
+            "status": Status.COMPLETED.value,
+            "score": 8,
+            "progress": 1,
+            "start_date": "2023-01-01T00:00",
+            "end_date": "2023-01-02T00:00",
+        }
+
+        response = self.client.post(
+            reverse("create_entry"),
+            {**form_data, "image_file": image_file},
+            follow=True,
+        )
+
+        # Check redirect
+        self.assertRedirects(response, reverse("create_entry"))
+
+        # Verify item was created with S3 URL
+        item = Item.objects.get(title="Test Movie with Upload")
+        self.assertEqual(item.image, mock_s3_url)
+
+        # Verify upload_to_s3 was called
+        mock_upload.assert_called_once()
+
+    @patch("app.helpers.upload_to_s3")
+    def test_create_entry_with_both_url_and_file(self, mock_upload):
+        """Test creating an entry with both URL and file (should fail)."""
+        from io import BytesIO
+
+        from PIL import Image
+
+        # Create a test image file
+        image = Image.new("RGB", (100, 100), color="red")
+        image_file = BytesIO()
+        image.save(image_file, format="JPEG")
+        image_file.seek(0)
+        image_file.name = "test_image.jpg"
+
+        form_data = {
+            "title": "Test Movie",
+            "media_type": MediaTypes.MOVIE.value,
+            "image": "https://example.com/image.jpg",
+            "status": Status.COMPLETED.value,
+            "score": 8,
+            "progress": 1,
+            "start_date": "2023-01-01T00:00",
+            "end_date": "2023-01-02T00:00",
+        }
+
+        response = self.client.post(
+            reverse("create_entry"),
+            {**form_data, "image_file": image_file},
+            follow=True,
+        )
+
+        # Check redirect
+        self.assertRedirects(response, reverse("create_entry"))
+
+        # Verify item was NOT created
+        self.assertFalse(Item.objects.filter(title="Test Movie").exists())
+
+        # Verify upload_to_s3 was NOT called
+        mock_upload.assert_not_called()
+
 
 class SearchParentViewTests(TestCase):
     """Test the parent search views."""
