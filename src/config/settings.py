@@ -293,6 +293,12 @@ STATICFILES_DIRS = [BASE_DIR / "static"]
 if BASE_URL:
     STATIC_URL = f"{BASE_URL}/static/"
 
+# AWS S3 configuration for file uploads
+AWS_ACCESS_KEY_ID = config("AWS_ACCESS_KEY_ID", default=None)
+AWS_SECRET_ACCESS_KEY = config("AWS_SECRET_ACCESS_KEY", default=None)
+AWS_S3_BUCKET_NAME = config("AWS_S3_BUCKET_NAME", default=None)
+AWS_S3_REGION_NAME = config("AWS_S3_REGION_NAME", default="us-east-1")
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/stable/ref/settings/#default-auto-field
 

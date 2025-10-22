@@ -585,12 +585,30 @@ def create_entry(request):
         return render(request, "app/create_entry.html", {"media_types": media_types})
 
     # Process the form submission
-    form = ManualItemForm(request.POST, user=request.user)
+    form = ManualItemForm(request.POST, request.FILES, user=request.user)
     if not form.is_valid():
         # Handle form validation errors
         logger.error(form.errors.as_json())
         helpers.form_error_messages(form, request)
         return redirect("create_entry")
+
+    # Handle file upload to S3 if provided
+    image_file = form.cleaned_data.get("image_file")
+    if image_file:
+        try:
+            s3_url = helpers.upload_to_s3(image_file)
+            if s3_url:
+                # Update the form's cleaned data with the S3 URL
+                form.cleaned_data["image"] = s3_url
+            else:
+                messages.error(
+                    request,
+                    "Failed to upload image to S3. Please check your AWS configuration.",
+                )
+                return redirect("create_entry")
+        except ValueError as e:
+            messages.error(request, str(e))
+            return redirect("create_entry")
 
     # Try to save the item
     try:
