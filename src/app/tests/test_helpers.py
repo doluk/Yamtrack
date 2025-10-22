@@ -87,7 +87,7 @@ class UploadToS3Test(TestCase):
 
     @override_settings(
         AWS_ACCESS_KEY_ID="test_key",
-        AWS_SECRET_ACCESS_KEY="test_secret",
+        AWS_SECRET_ACCESS_KEY="test_secret"  ,  # noqa: S106
         AWS_S3_BUCKET_NAME="test_bucket",
         AWS_S3_REGION_NAME="us-east-1",
     )
@@ -110,17 +110,20 @@ class UploadToS3Test(TestCase):
         mock_boto_client.assert_called_once_with(
             "s3",
             aws_access_key_id="test_key",
-            aws_secret_access_key="test_secret",
+            aws_secret_access_key="test_secret"  ,  # noqa: S106
             region_name="us-east-1",
         )
 
         # Verify upload was called
         mock_s3.upload_fileobj.assert_called_once()
-        call_args = mock_s3.upload_fileobj.call_args
 
         # Verify the result is a valid S3 URL
         self.assertIsNotNone(result)
-        self.assertTrue(result.startswith("https://test_bucket.s3.us-east-1.amazonaws.com/custom-media/"))
+        self.assertTrue(
+            result.startswith(
+                "https://test_bucket.s3.us-east-1.amazonaws.com/custom-media/",
+            ),
+        )
         self.assertTrue(result.endswith(".jpg"))
 
     @override_settings(AWS_ACCESS_KEY_ID=None, AWS_SECRET_ACCESS_KEY=None)
@@ -136,7 +139,7 @@ class UploadToS3Test(TestCase):
 
     @override_settings(
         AWS_ACCESS_KEY_ID="test_key",
-        AWS_SECRET_ACCESS_KEY="test_secret",
+        AWS_SECRET_ACCESS_KEY="test_secret"  ,  # noqa: S106
         AWS_S3_BUCKET_NAME=None,
     )
     def test_upload_to_s3_no_bucket(self):
@@ -151,7 +154,7 @@ class UploadToS3Test(TestCase):
 
     @override_settings(
         AWS_ACCESS_KEY_ID="test_key",
-        AWS_SECRET_ACCESS_KEY="test_secret",
+        AWS_SECRET_ACCESS_KEY="test_secret"  ,  # noqa: S106
         AWS_S3_BUCKET_NAME="test_bucket",
         AWS_S3_REGION_NAME="us-east-1",
     )
@@ -161,7 +164,12 @@ class UploadToS3Test(TestCase):
         # Mock the S3 client to raise an error
         mock_s3 = MagicMock()
         mock_s3.upload_fileobj.side_effect = ClientError(
-            {"Error": {"Code": "NoSuchBucket", "Message": "The specified bucket does not exist"}},
+            {
+                "Error": {
+                    "Code": "NoSuchBucket",
+                    "Message": "The specified bucket does not exist",
+                },
+            },
             "PutObject",
         )
         mock_boto_client.return_value = mock_s3

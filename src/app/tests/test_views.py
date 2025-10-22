@@ -1,4 +1,5 @@
 import datetime
+from io import BytesIO
 from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
@@ -6,6 +7,7 @@ from django.db import transaction
 from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
+from PIL import Image
 
 from app.models import (
     TV,
@@ -1345,12 +1347,11 @@ class CreateEntryViewTests(TestCase):
     @patch("app.helpers.upload_to_s3")
     def test_create_entry_with_file_upload(self, mock_upload):
         """Test creating an entry with file upload."""
-        from io import BytesIO
-
-        from PIL import Image
-
         # Create a mock S3 URL
-        mock_s3_url = "https://test-bucket.s3.us-east-1.amazonaws.com/custom-media/test-image.jpg"
+        mock_s3_url = (
+            "https://test-bucket.s3.us-east-1.amazonaws.com/"
+            "custom-media/test-image.jpg"
+        )
         mock_upload.return_value = mock_s3_url
 
         # Create a test image file
@@ -1389,10 +1390,6 @@ class CreateEntryViewTests(TestCase):
     @patch("app.helpers.upload_to_s3")
     def test_create_entry_with_both_url_and_file(self, mock_upload):
         """Test creating an entry with both URL and file (should fail)."""
-        from io import BytesIO
-
-        from PIL import Image
-
         # Create a test image file
         image = Image.new("RGB", (100, 100), color="red")
         image_file = BytesIO()

@@ -604,7 +604,8 @@ def create_entry(request):
             else:
                 messages.error(
                     request,
-                    "Failed to upload image to S3. Please check your AWS configuration.",
+                    "Failed to upload image to S3. "
+                    "Please check your AWS configuration.",
                 )
                 return redirect("create_entry")
         except ValueError as e:

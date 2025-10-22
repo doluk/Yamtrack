@@ -1,3 +1,4 @@
+import logging
 from urllib.parse import parse_qsl, urlencode, urlparse
 from uuid import uuid4
 
@@ -9,6 +10,8 @@ from django.http import HttpResponseRedirect
 from django.shortcuts import redirect
 from django.utils.encoding import iri_to_uri
 from django.utils.http import url_has_allowed_host_and_scheme
+
+logger = logging.getLogger(__name__)
 
 
 def minutes_to_hhmm(total_minutes):
@@ -112,14 +115,10 @@ def upload_to_s3(file, bucket_name=None, region_name=None):
             ExtraArgs={"ContentType": file.content_type},
         )
 
-        # Generate the S3 URL
-        s3_url = f"https://{bucket_name}.s3.{region_name}.amazonaws.com/{unique_filename}"
-        return s3_url
+        # Generate and return the S3 URL
+        return f"https://{bucket_name}.s3.{region_name}.amazonaws.com/{unique_filename}"
 
-    except ClientError as e:
+    except ClientError:
         # Log the error and return None
-        import logging
-
-        logger = logging.getLogger(__name__)
-        logger.exception("Failed to upload file to S3: %s", e)
+        logger.exception("Failed to upload file to S3")
         return None
