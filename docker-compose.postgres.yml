@@ -1,14 +1,13 @@
 services:
   yamtrack:
     container_name: yamtrack
-    image: ghcr.io/fuzzygrim/yamtrack
+    build: .
     restart: unless-stopped
     depends_on:
       - db
       - redis
     environment:
       - TZ=Europe/Berlin
-      - SECRET=longstring
       - REDIS_URL=redis://redis:6379
       - DB_HOST=db
       - DB_NAME=yamtrack
@@ -19,7 +18,7 @@ services:
       - "8000:8000"
 
   db:
-    image: postgres:16-alpine
+    image: postgres:18-alpine
     container_name: yamtrack-db
     environment:
       - POSTGRES_DB=yamtrack
