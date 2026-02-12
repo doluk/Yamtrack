@@ -100,6 +100,12 @@ class ManualItemForm(forms.ModelForm):
         label="Parent Season",
     )
 
+    image_file = forms.ImageField(
+        required=False,
+        label="Upload Image",
+        help_text="Upload an image file (will be stored in S3)",
+    )
+
     class Meta:
         """Bind form to model."""
 
@@ -134,9 +140,16 @@ class ManualItemForm(forms.ModelForm):
         """Validate the form."""
         cleaned_data = super().clean()
         image = cleaned_data.get("image")
+        image_file = cleaned_data.get("image_file")
         media_type = cleaned_data.get("media_type")
 
-        if not image:
+        # Validate that either image URL or image file is provided (but not both)
+        if image and image_file:
+            self.add_error(
+                "image_file",
+                "Please provide either an image URL or upload a file, not both",
+            )
+        elif not image and not image_file:
             cleaned_data["image"] = settings.IMG_NONE
 
         # Title not required for season/episode
